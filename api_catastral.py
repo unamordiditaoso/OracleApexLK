@@ -1,3 +1,6 @@
+#http://127.0.0.1:8000/docs#/
+
+
 from fastapi import FastAPI, HTTPException, Query
 from pydantic import BaseModel
 import pandas as pd
@@ -31,6 +34,34 @@ def read_root():
     """
     return {"message": "Bienvenido a la API Catastral"}
 
+@app.get("/properties/search-by-name", summary="Buscar propiedades por dirección")
+def search_properties(
+    keyword: str = Query("", description="Término para buscar en direcciones")
+):
+    """
+    Buscar propiedades que coincidan parcialmente con el término dado en la dirección.
+    """
+    # Asegurarse de que la columna 'Dirección' no tenga valores nulos
+    df["Dirección"] = df["Dirección"].fillna("")
+
+    # Filtrar el DataFrame basado en el término de búsqueda
+    filtered_df = df[df["Dirección"].str.contains(keyword, case=False, na=False)]
+
+    # Si no hay resultados, devolver un mensaje claro
+    if filtered_df.empty:
+        raise HTTPException(status_code=404, detail="No se encontraron propiedades con la dirección indicada.")
+
+    return filtered_df.to_dict(orient="records")
+
+@app.get("/properties/{property_id}", summary="Obtener propiedad por ID")
+def get_property(property_id: int):
+    """
+    Obtener una propiedad específica por su ID.
+    """
+    property_data = df[df["ID"] == property_id]
+    if property_data.empty:
+        raise HTTPException(status_code=404, detail="Propiedad no encontrada")
+    return property_data.to_dict(orient="records")[0]
 
 @app.get("/properties/", summary="Listar propiedades con paginación")
 def get_properties(
@@ -48,34 +79,6 @@ def get_properties(
     total = len(sorted_df)
     items = sorted_df.iloc[skip: skip + limit].to_dict(orient="records")
     return {"total": total, "skip": skip, "limit": limit, "items": items}
-
-
-@app.get("/properties/{property_id}", summary="Obtener propiedad por ID")
-def get_property(property_id: int):
-    """
-    Obtener una propiedad específica por su ID.
-    """
-    property_data = df[df["ID"] == property_id]
-    if property_data.empty:
-        raise HTTPException(status_code=404, detail="Propiedad no encontrada")
-    return property_data.to_dict(orient="records")[0]
-
-
-@app.get("/properties/search", summary="Buscar propiedades")
-def search_properties(
-    keyword: str = Query("", description="Término para buscar en direcciones"),
-    min_superficie: int = Query(0, description="Superficie mínima en m²"),
-    max_superficie: int = Query(1000, description="Superficie máxima en m²")
-):
-    """
-    Buscar propiedades que coincidan con los criterios dados.
-    """
-    filtered_df = df[
-        (df["Dirección"].str.contains(keyword, case=False)) &
-        (df["Superficie (m²)"] >= min_superficie) &
-        (df["Superficie (m²)"] <= max_superficie)
-    ]
-    return filtered_df.to_dict(orient="records")
 
 
 @app.post("/properties/", summary="Añadir una nueva propiedad")

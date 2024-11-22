@@ -1,4 +1,4 @@
-ID,Dirección,Valor Catastral,Superficie,Año de Construcción,Año Última Reforma
+ID,Dirección,Valor Catastral,Superficie,Año de Construccion,Año Ultima Reforma
 1,Callejón Oscuro 801,297267,147,1960,2021.0
 2,Calle Lavapies 84,327522,284,1981,2003.0
 3,Calle Los Santos 6,369952,374,1992,2004.0
@@ -10,7 +10,7 @@ ID,Dirección,Valor Catastral,Superficie,Año de Construcción,Año Última Refo
 9,Calle Real 513,351234,381,1957,1957.0
 10,Calle Pequeña 113,325949,195,2007,2016.0
 11,Calle Norte 541,320767,106,1971,1971.0
-12,Avenida Pirncipe de Bel-Air 782,349436,63,1974,2009.0
+12,Avenida Principe de Bel-Air 782,349436,63,1974,2009.0
 13,Calle Matamoros 480,259324,296,1988,1988.0
 14,Calle Carismática 856,292673,266,2001,2010.0
 15,Calle Falsa 169,185733,143,1967,2008.0
@@ -99,3 +99,4 @@ ID,Dirección,Valor Catastral,Superficie,Año de Construcción,Año Última Refo
 98,Calle Falsa 7,205093,176,1966,1966.0
 99,Calle Oscura 81,341505,143,1977,2014.0
 100,Calle Grande 921,323390,390,1959,2008.0
+101,Calle Clara Campoamor 121,150340,179,2001,2017

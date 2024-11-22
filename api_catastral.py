@@ -1,30 +1,111 @@
-# url del api: http://127.0.0.1:8000/docs
-
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException, Query
+from pydantic import BaseModel
 import pandas as pd
+import os
 
-# Cargar el archivo CSV
-df = pd.read_csv("dataset_catastral.csv")
+# Ruta al archivo CSV
+CSV_FILE_PATH = "dataset_catastral.csv"
 
+# Verificar si el archivo CSV existe
+if os.path.exists(CSV_FILE_PATH):
+    df = pd.read_csv(CSV_FILE_PATH)
+else:
+    raise FileNotFoundError(f"El archivo {CSV_FILE_PATH} no existe.")
+
+# Crear la aplicación FastAPI
 app = FastAPI()
 
-@app.get("/")
+# Modelo para nuevas propiedades
+class Property(BaseModel):
+    Dirección: str
+    Valor_Catastral_EUR: int
+    Superficie_m2: int
+    Año_de_Construcción: int
+    Año_Ultima_Reforma: int
+
+
+@app.get("/", summary="Bienvenida")
 def read_root():
+    """
+    Mensaje de bienvenida a la API.
+    """
     return {"message": "Bienvenido a la API Catastral"}
 
-@app.get("/properties/")
-def get_properties(skip: int = 0, limit: int = 10):
-    """
-    Obtener propiedades con paginación.
-    """
-    return df.iloc[skip: skip + limit].to_dict(orient="records")
 
-@app.get("/properties/{property_id}")
+@app.get("/properties/", summary="Listar propiedades con paginación")
+def get_properties(
+    skip: int = Query(0, description="Número de registros a omitir"),
+    limit: int = Query(10, description="Cantidad máxima de registros a devolver"),
+    sort_by: str = Query("ID", description="Columna por la que ordenar los resultados"),
+    order: str = Query("asc", description="Orden (asc o desc)")
+):
+    """
+    Obtener propiedades con soporte para paginación y ordenamiento.
+    """
+    if sort_by not in df.columns:
+        raise HTTPException(status_code=400, detail=f"Columna '{sort_by}' no válida")
+    sorted_df = df.sort_values(by=sort_by, ascending=(order == "asc"))
+    total = len(sorted_df)
+    items = sorted_df.iloc[skip: skip + limit].to_dict(orient="records")
+    return {"total": total, "skip": skip, "limit": limit, "items": items}
+
+
+@app.get("/properties/{property_id}", summary="Obtener propiedad por ID")
 def get_property(property_id: int):
     """
-    Obtener una propiedad por ID.
+    Obtener una propiedad específica por su ID.
     """
     property_data = df[df["ID"] == property_id]
     if property_data.empty:
-        return {"error": "Propiedad no encontrada"}
+        raise HTTPException(status_code=404, detail="Propiedad no encontrada")
     return property_data.to_dict(orient="records")[0]
+
+
+@app.get("/properties/search", summary="Buscar propiedades")
+def search_properties(
+    keyword: str = Query("", description="Término para buscar en direcciones"),
+    min_superficie: int = Query(0, description="Superficie mínima en m²"),
+    max_superficie: int = Query(1000, description="Superficie máxima en m²")
+):
+    """
+    Buscar propiedades que coincidan con los criterios dados.
+    """
+    filtered_df = df[
+        (df["Dirección"].str.contains(keyword, case=False)) &
+        (df["Superficie (m²)"] >= min_superficie) &
+        (df["Superficie (m²)"] <= max_superficie)
+    ]
+    return filtered_df.to_dict(orient="records")
+
+
+@app.post("/properties/", summary="Añadir una nueva propiedad")
+def add_property(property: Property):
+    """
+    Agregar una nueva propiedad al archivo CSV con generación automática del ID.
+    """
+    global df
+
+    # Calcular el próximo ID automáticamente
+    if df.empty:
+        next_id = 1
+    else:
+        next_id = df["ID"].max() + 1
+
+    # Crear una lista con los valores de la nueva propiedad
+    new_row = [
+        next_id,
+        property.Dirección,
+        property.Valor_Catastral_EUR,
+        property.Superficie_m2,
+        property.Año_de_Construcción,
+        property.Año_Ultima_Reforma,
+    ]
+
+    # Escribir directamente la nueva fila en el archivo CSV
+    with open(CSV_FILE_PATH, mode="a", encoding="utf-8") as file:
+        file.write(",".join(map(str, new_row)) + "\n")
+    
+    # Actualizar el DataFrame en memoria
+    df.loc[len(df)] = new_row
+
+    return {"message": f"Propiedad agregada exitosamente con ID {next_id}."}

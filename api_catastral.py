@@ -1,5 +1,5 @@
-#http://127.0.0.1:8000/docs#/
-
+# http://127.0.0.1:8000/docs#/
+# uvicorn api_catastral:app --reload
 
 from fastapi import FastAPI, HTTPException, Query
 from pydantic import BaseModel
@@ -80,7 +80,6 @@ def get_properties(
     items = sorted_df.iloc[skip: skip + limit].to_dict(orient="records")
     return {"total": total, "skip": skip, "limit": limit, "items": items}
 
-
 @app.post("/properties/", summary="Añadir una nueva propiedad")
 def add_property(property: Property):
     """
@@ -88,11 +87,12 @@ def add_property(property: Property):
     """
     global df
 
+    # Validar duplicados por dirección
+    if property.Dirección in df["Dirección"].values:
+        raise HTTPException(status_code=400, detail="Ya existe una propiedad con la misma dirección.")
+
     # Calcular el próximo ID automáticamente
-    if df.empty:
-        next_id = 1
-    else:
-        next_id = df["ID"].max() + 1
+    next_id = 1 if df.empty else df["ID"].max() + 1
 
     # Crear una lista con los valores de la nueva propiedad
     new_row = [
@@ -112,3 +112,59 @@ def add_property(property: Property):
     df.loc[len(df)] = new_row
 
     return {"message": f"Propiedad agregada exitosamente con ID {next_id}."}
+
+@app.put("/properties/{property_id}", summary="Actualizar una propiedad")
+def update_property(property_id: int, property: Property):
+    """
+    Actualizar los detalles de una propiedad existente por ID.
+    """
+    global df
+
+    # Verificar si la propiedad existe
+    if property_id not in df["ID"].values:
+        raise HTTPException(status_code=404, detail="Propiedad no encontrada")
+
+    # Crear una nueva fila con los datos actualizados
+    updated_row = [
+        property_id,
+        property.Dirección,
+        property.Valor_Catastral_EUR,
+        property.Superficie_m2,
+        property.Año_de_Construcción,
+        property.Año_Ultima_Reforma,
+    ]
+
+    # Localizar el índice de la propiedad en el DataFrame
+    index = df[df["ID"] == property_id].index[0]
+
+    # Sobrescribir el contenido del DataFrame
+    df.loc[index] = updated_row
+
+    # Sobrescribir todo el archivo CSV
+    with open(CSV_FILE_PATH, mode="w", encoding="utf-8") as file:
+        # Escribir encabezados
+        file.write(",".join(df.columns) + "\n")
+        # Escribir filas actualizadas
+        for _, row in df.iterrows():
+            file.write(",".join(map(str, row)) + "\n")
+
+    return {"message": f"Propiedad con ID {property_id} actualizada exitosamente."}
+
+@app.delete("/properties/{property_id}", summary="Eliminar una propiedad")
+def delete_property(property_id: int):
+    """
+    Eliminar una propiedad del dataset por su ID.
+    """
+    global df
+
+    # Verificar si la propiedad existe
+    if property_id not in df["ID"].values:
+        raise HTTPException(status_code=404, detail="Propiedad no encontrada")
+
+    # Eliminar la propiedad
+    df = df[df["ID"] != property_id]
+
+    # Guardar los cambios en el archivo CSV
+    df.to_csv(CSV_FILE_PATH, index=False)
+
+    return {"message": f"Propiedad con ID {property_id} eliminada exitosamente."}

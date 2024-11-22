@@ -54,7 +54,7 @@ ID,Dirección,Valor Catastral,Superficie,Año de Construccion,Año Ultima Reform
 53,Calle Grande 741,377272,366,1966,1966.0
 54,Calle Real 402,158976,124,1963,1963.0
 55,Calle Pequeña 306,264108,327,1958,2007.0
-56,Calle Sol 318,304076,92,1987,1987.0
+56,Calle Soleada 2,100000,78,2018,2018.0
 57,Calle Coca Cola 36,170910,93,1981,1981.0
 58,Calle Estrella 523,195675,349,2003,2003.0
 59,Calle Luna 273,330312,108,1957,2013.0
@@ -99,5 +99,4 @@ ID,Dirección,Valor Catastral,Superficie,Año de Construccion,Año Ultima Reform
 98,Calle Falsa 7,205093,176,1966,1966.0
 99,Calle Oscura 81,341505,143,1977,2014.0
 100,Calle Grande 921,323390,390,1959,2008.0
-101,Calle Clara Campoamor 121,150340,179,2001,2017
-102,Calle Realista,123000,90,2001,2015
+101,Calle Clara Campoamor 121,150340,179,2001,2017.0

@@ -29,7 +29,7 @@ def document_sql(file_number):
     # Generar una introducción personalizada
     intro = f"# Documentación del archivo {input_filename}\n\n"
     intro += (
-        "Este documento proporciona una descripción detallada de las funciones de {input_filename}, "
+        "Este documento proporciona una descripción detallada de las funciones, "
         "procedimientos y estructuras presentes en el archivo SQL. A continuación, "
         "se presenta el análisis y explicación del contenido.\n\n"
     )

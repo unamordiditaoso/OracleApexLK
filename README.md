@@ -1,4 +1,4 @@
-# Proyecto: Instalación de APEX On-Premise con ORDS y Tomcat
+# Instalación de APEX On-Premise
 
 Este repositorio contiene guías e instrucciones para la instalación y configuración de **Oracle Application Express (APEX)** on-premise junto con **Oracle REST Data Services (ORDS)** y **Apache Tomcat**. Se detallan los pasos básicos, así como las complicaciones más frecuentes que pueden surgir durante el proceso.
 
